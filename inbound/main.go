@@ -1,14 +1,17 @@
 package main
 
 import (
+	// Standard libraries
 	"flag"
-	"github.com/grd/stat"
-	"github.com/quickfixgo/quickfix"
 	"log"
 	"os"
 	"runtime"
 	"runtime/pprof"
 	"time"
+
+	// Custom libraries
+	"github.com/grd/stat"
+	"github.com/quickfixgo/quickfix"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
@@ -19,10 +22,18 @@ var count = 0
 var allDone = make(chan interface{})
 var app = &InboundRig{}
 var metrics stat.IntSlice
+var t0 time.Time
 
 func main() {
 	flag.Parse()
+
 	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
 
@@ -42,8 +53,9 @@ func main() {
 	}
 
 	logFactory := quickfix.NewNullLogFactory()
+	storeFactory := quickfix.NewMemoryStoreFactory()
 
-	acceptor, err := quickfix.NewAcceptor(app, appSettings, logFactory)
+	acceptor, err := quickfix.NewAcceptor(app, storeFactory, appSettings, logFactory)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -52,6 +64,7 @@ func main() {
 	}
 
 	<-allDone
+	elapsed := time.Since(t0)
 
 	metricsUS := make(stat.Float64Slice, *sampleSize)
 	for i, durationNS := range metrics {
@@ -65,20 +78,14 @@ func main() {
 	log.Printf("Sample mean is %g us", mean)
 	log.Printf("Sample max is %g us (%v)", max, maxIndex)
 	log.Printf("Standard Dev is %g us", stdev)
+	log.Printf("Processed %d msg in %v [effective rate: %.4f msg/s]", count, elapsed, float64(count)/float64(elapsed)*float64(time.Second))
 }
 
 type InboundRig struct{}
 
 func (e InboundRig) OnCreate(sessionID quickfix.SessionID) {}
 func (e InboundRig) OnLogon(sessionID quickfix.SessionID) {
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		pprof.StartCPUProfile(f)
-	}
+	t0 = time.Now()
 }
 func (e InboundRig) OnLogout(sessionID quickfix.SessionID)                                    {}
 func (e InboundRig) ToAdmin(msgBuilder quickfix.MessageBuilder, sessionID quickfix.SessionID) {}

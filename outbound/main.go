@@ -1,14 +1,17 @@
 package main
 
 import (
+	// Standard libraries
 	"flag"
+	"log"
+	"os"
+	"time"
+
+	// Custom libraries
 	"github.com/quickfixgo/quickfix"
 	"github.com/quickfixgo/quickfix/fix/enum"
 	"github.com/quickfixgo/quickfix/fix/field"
 	"github.com/quickfixgo/quickfix/fix42/newordersingle"
-	"log"
-	"os"
-	"time"
 )
 
 var fixconfig = flag.String("fixconfig", "outbound.cfg", "FIX config file")
@@ -31,12 +34,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	logFactory, err := quickfix.NewFileLogFactory(appSettings)
+	// logFactory, err := quickfix.NewFileLogFactory(appSettings)
+	logFactory := quickfix.NewNullLogFactory()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	initiator, err := quickfix.NewInitiator(app, appSettings, logFactory)
+	storeFactory := quickfix.NewMemoryStoreFactory()
+
+	initiator, err := quickfix.NewInitiator(app, storeFactory, appSettings, logFactory)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -56,7 +62,7 @@ func main() {
 			field.NewOrdType(enum.OrdType_MARKET))
 
 		quickfix.SendToTarget(order, SessionID)
-		time.Sleep(1 * time.Millisecond)
+		// time.Sleep(1 * time.Millisecond)
 	}
 
 	time.Sleep(2 * time.Second)
