@@ -9,8 +9,7 @@ import (
 
 	// Custom libraries
 	"github.com/quickfixgo/quickfix"
-	"github.com/quickfixgo/quickfix/fix/enum"
-	"github.com/quickfixgo/quickfix/fix/field"
+	"github.com/quickfixgo/quickfix/enum"
 	"github.com/quickfixgo/quickfix/fix42/newordersingle"
 )
 
@@ -53,13 +52,13 @@ func main() {
 	<-start
 
 	for i := 0; i < *sampleSize; i++ {
-		order := newordersingle.Builder(
-			field.NewClOrdID("100"),
-			field.NewHandlInst("1"),
-			field.NewSymbol("TSLA"),
-			field.NewSide(enum.Side_BUY),
-			&field.TransactTimeField{},
-			field.NewOrdType(enum.OrdType_MARKET))
+		order := newordersingle.Message{}
+		order.ClOrdID = "100"
+		order.HandlInst = "1"
+		order.Symbol = "TSLA"
+		order.Side = enum.Side_BUY
+		order.TransactTime = time.Now()
+		order.OrdType = enum.OrdType_MARKET
 
 		quickfix.SendToTarget(order, SessionID)
 		// time.Sleep(1 * time.Millisecond)
@@ -77,9 +76,9 @@ func (e *OutboundRig) OnLogon(sessionID quickfix.SessionID) {
 	SessionID = sessionID
 	start <- "START"
 }
-func (e OutboundRig) OnLogout(sessionID quickfix.SessionID)                                    {}
-func (e OutboundRig) ToAdmin(msgBuilder quickfix.MessageBuilder, sessionID quickfix.SessionID) {}
-func (e OutboundRig) ToApp(msgBuilder quickfix.MessageBuilder, sessionID quickfix.SessionID) (err error) {
+func (e OutboundRig) OnLogout(sessionID quickfix.SessionID)                             {}
+func (e OutboundRig) ToAdmin(msgBuilder quickfix.Message, sessionID quickfix.SessionID) {}
+func (e OutboundRig) ToApp(msgBuilder quickfix.Message, sessionID quickfix.SessionID) (err error) {
 	return
 }
 

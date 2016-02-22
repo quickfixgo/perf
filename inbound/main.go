@@ -87,9 +87,9 @@ func (e InboundRig) OnCreate(sessionID quickfix.SessionID) {}
 func (e InboundRig) OnLogon(sessionID quickfix.SessionID) {
 	t0 = time.Now()
 }
-func (e InboundRig) OnLogout(sessionID quickfix.SessionID)                                    {}
-func (e InboundRig) ToAdmin(msgBuilder quickfix.MessageBuilder, sessionID quickfix.SessionID) {}
-func (e InboundRig) ToApp(msgBuilder quickfix.MessageBuilder, sessionID quickfix.SessionID) (err error) {
+func (e InboundRig) OnLogout(sessionID quickfix.SessionID)                             {}
+func (e InboundRig) ToAdmin(msgBuilder quickfix.Message, sessionID quickfix.SessionID) {}
+func (e InboundRig) ToApp(msgBuilder quickfix.Message, sessionID quickfix.SessionID) (err error) {
 	return
 }
 
